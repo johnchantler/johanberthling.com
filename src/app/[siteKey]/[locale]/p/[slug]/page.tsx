@@ -1,0 +1,94 @@
+import { Page } from "@/components";
+import { getGenerateMetadata } from "@/lib";
+import { Params } from "@/types";
+import { type SearchParams, getLocalizedContent } from "@venuecms/sdk-next";
+import { getPage, getPages } from "@venuecms/sdk-next";
+import { notFound } from "next/navigation";
+
+import { PageWithParent, collectDescendants } from "@/lib/utils/tree";
+
+import { PageListing } from "@/components/PageListing";
+import { setupSSR } from "@/components/utils";
+import { resolvePageListingLayout } from "@/components/utils/pageLayout";
+
+export const generateMetadata = getGenerateMetadata(getPage);
+
+const PagePage = async ({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string } & Params>;
+  // Read here and handed down because only a route segment can: a listing block
+  // sits too deep inside the content to ask for the URL it is being paged by.
+  searchParams: Promise<SearchParams>;
+}) => {
+  const { slug, locale } = await params;
+  await setupSSR({ params });
+
+  // Awaited out here, alongside `params`, rather than at the call sites below:
+  // the catch turns anything thrown into a 404, and a dynamic-rendering bailout
+  // thrown by reading the URL has to reach the framework, not become a
+  // not-found page.
+  const resolvedSearchParams = await searchParams;
+
+  try {
+    const { data: page } = await getPage({ slug });
+    const { data: pages } = await getPages();
+
+    if (!page) {
+      notFound();
+    }
+
+    // Resolved before the `pages` guard: a listing draws from its own body, so
+    // an unreadable page tree is no reason to 404 it.
+    const listingLayout = resolvePageListingLayout(page.type);
+
+    if (listingLayout) {
+      const { content } = getLocalizedContent(page.localizedContent, locale);
+
+      return (
+        <PageListing
+          layout={listingLayout}
+          title={content.title ?? undefined}
+          content={content}
+          searchParams={resolvedSearchParams}
+        />
+      );
+    }
+
+    // Sub-pages render in full beneath their parent, so each needs its own
+    // body, which only getPage returns. A missing page list just means no
+    // sub-pages, not a 404: the page itself still has everything it needs.
+    // Likewise a sub-page that fails to load is dropped rather than letting
+    // the catch below 404 its parent.
+    const descendants = pages
+      ? collectDescendants(pages.records as Array<PageWithParent>, page.id)
+      : [];
+    const subPages = (
+      await Promise.all(
+        descendants.map(({ slug }) =>
+          getPage({ slug }).then(
+            ({ data }) => data,
+            (error) => {
+              console.error(`Sub-page "${slug}" failed to load`, error);
+              return undefined;
+            },
+          ),
+        ),
+      )
+    ).filter((subPage) => subPage != null);
+
+    return (
+      <Page
+        page={page}
+        subPages={subPages}
+        searchParams={resolvedSearchParams}
+      />
+    );
+  } catch (error) {
+    console.error(error);
+    notFound();
+  }
+};
+
+export default PagePage;

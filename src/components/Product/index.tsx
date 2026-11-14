@@ -1,0 +1,131 @@
+import {
+  ProductVariant,
+  type SearchParams,
+  Site,
+  VenueContent,
+  Product as VenueProduct,
+  getLocalizedContent,
+} from "@venuecms/sdk-next";
+import { useLocale, useTranslations } from "next-intl";
+
+import { cn } from "@/lib/utils";
+
+import { contentComponents } from "@/components/ListingBlock";
+import {
+  PRODUCT_FRAME,
+  VenueImage,
+  contentImageHandlers,
+} from "@/components/VenueImage";
+
+import { ProfileCompact } from "../ProfileCompact";
+import {
+  ColumnLeft,
+  ColumnRight,
+  TwoColumnLayout,
+  TwoSubColumnLayout,
+} from "../layout";
+
+export const Product = ({
+  product,
+  site,
+  searchParams,
+}: {
+  product: VenueProduct;
+  site: Site;
+  /**
+   * The route's search params, for the pagers on any listing blocks in this
+   * content. Only a route segment can read them, so they are passed down.
+   *
+   * Required rather than optional: a caller that forgets it costs every listing
+   * in this content its pager, and does so silently — the records still render.
+   * A surface that genuinely has no URL to page by passes `{}` and says so.
+   */
+  searchParams: SearchParams;
+}) => {
+  const locale = useLocale();
+  const { artists, variants = [] } = product;
+
+  const { content } = getLocalizedContent(product?.localizedContent, locale);
+
+  return (
+    <TwoColumnLayout>
+      <ColumnLeft>
+        <div className="flex flex-col gap-14">
+          <div className="flex flex-col gap-10">
+            <div>
+              {product.author ? (
+                <div className={cn("text-secondary")}>{product.author}</div>
+              ) : null}
+              <div>{content.title}</div>
+            </div>
+            {variants.length > 0 ? (
+              <div className="flex flex-col gap-4 pt-2">
+                {variants.map((variant) => (
+                  <div
+                    key={variant.productType?.type}
+                    className="flex items-center gap-8"
+                  >
+                    <div className="text-muted">
+                      {variant.productType?.type}
+                    </div>
+                    <VariantPrice variant={variant} site={site} />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <VenueImage image={product.image} frame={PRODUCT_FRAME} />
+        </div>
+      </ColumnLeft>
+
+      <ColumnRight className="max-w-4xl">
+        <VenueContent
+          components={contentImageHandlers}
+          className="flex flex-col gap-6"
+          content={content}
+          contentStyles={contentComponents}
+          searchParams={searchParams}
+        />
+        <TwoSubColumnLayout>
+          {artists.map(({ profile }) => (
+            <ProfileCompact key={profile.slug} profile={profile} />
+          ))}
+        </TwoSubColumnLayout>
+      </ColumnRight>
+    </TwoColumnLayout>
+  );
+};
+
+const VariantPrice = ({
+  variant,
+  site,
+}: {
+  variant: ProductVariant;
+  site: Site;
+}) => {
+  const t = useTranslations("shop");
+  const displayPrice =
+    variant.price > 0
+      ? `${variant.price} ${variant.currency || site.settings?.defaults?.currency || ""}`
+      : variant.price < 0
+        ? t("free")
+        : t("buy");
+  return variant.price > 0 || variant.externalLink ? (
+    <div
+      key={variant.productType?.type + "price"}
+      className="border border-muted px-2 py-1 text-secondary"
+    >
+      {variant.externalLink ? (
+        <a
+          href={variant.externalLink}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {displayPrice}
+        </a>
+      ) : (
+        displayPrice
+      )}
+    </div>
+  ) : null;
+};
