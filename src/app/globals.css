@@ -240,3 +240,49 @@ html.darkGreyCM {
   --nav: 193, 50%, 85%, 1;
   --overlay: 280, 5%, 12%, 0.8;
 }
+
+/* Products fading out as they scroll up off the screen: each starts to fade
+   as its top edge reaches the bottom of the header, which is transparent, and
+   is at 0% once 75% of it has passed under. Scroll-driven, so it tracks the
+   scroll exactly, fading back in on the way down; browsers without
+   scroll-driven animations simply leave products as they are.
+
+   .scroll-fade-edges: on mobile only.
+   .scroll-fade-edges-all: at every screen size. */
+/* Colour drains away along with the opacity, over the same scroll. */
+@keyframes scroll-fade-out {
+  to {
+    opacity: 0;
+    filter: grayscale(1);
+  }
+}
+
+/* The header's height (see HeaderSpacer): where products start to fade. */
+:root {
+  --scroll-fade-top: 4.25rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --scroll-fade-top: 3rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .scroll-fade-edges-all {
+      /* The shorthand resets the timeline, so it has to come first. */
+      animation: scroll-fade-out linear both;
+      animation-timeline: view(block var(--scroll-fade-top) 0);
+      animation-range: exit 0% exit 75%;
+    }
+
+    @media (max-width: 639.98px) {
+      .scroll-fade-edges {
+        animation: scroll-fade-out linear both;
+        animation-timeline: view(block var(--scroll-fade-top) 0);
+        animation-range: exit 0% exit 75%;
+      }
+    }
+  }
+}

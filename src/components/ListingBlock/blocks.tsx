@@ -245,7 +245,7 @@ export const ProductCoversListingBlock = ({
       records={records}
       label={t("products")}
     >
-      <ProductCoversGrid products={records} />
+      <ProductCoversGrid products={records} fadeOnAllScreens />
     </PaginatedListing>
   );
 };

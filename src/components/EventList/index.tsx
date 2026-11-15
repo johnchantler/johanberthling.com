@@ -128,6 +128,23 @@ export const ListEvent = ({
     </EventLink>
   );
 
+  const locationSegment = locationTitle ? (
+    location?.mapLink ? (
+      <a
+        href={location.mapLink}
+        target="_blank"
+        rel="noreferrer"
+        title={locationTitle}
+      >
+        {truncate(locationTitle, LOCATION_MAX_CHARS)}
+      </a>
+    ) : (
+      <span title={locationTitle}>
+        {truncate(locationTitle, LOCATION_MAX_CHARS)}
+      </span>
+    )
+  ) : null;
+
   const segments: Array<ReactNode> = [
     event.startDate ? (
       <EventLink href={href}>
@@ -142,22 +159,7 @@ export const ListEvent = ({
       </EventLink>
     ) : null,
     title,
-    locationTitle ? (
-      location?.mapLink ? (
-        <a
-          href={location.mapLink}
-          target="_blank"
-          rel="noreferrer"
-          title={locationTitle}
-        >
-          {truncate(locationTitle, LOCATION_MAX_CHARS)}
-        </a>
-      ) : (
-        <span title={locationTitle}>
-          {truncate(locationTitle, LOCATION_MAX_CHARS)}
-        </span>
-      )
-    ) : null,
+    locationSegment,
     location?.city,
     location?.country ? toCountryCode(location.country, locale) : null,
     isCancelled ? t("cancelled") : null,
@@ -186,35 +188,50 @@ export const ListEvent = ({
         </div>
       ) : null}
       {/* Date / Title / Location / City / Country, on one line that never
-          wraps: a long row runs past its column rather than breaking, except
-          a past one, which is cut off with an ellipsis at the column edge.
-          Missing parts are left out along with their separator. Everything is
-          secondary except the title, which sets its own primary colour; the
-          next event is all highlight. */}
+          wraps. On desktop a long row runs past its column rather than
+          breaking, except a past one, which is cut off with an ellipsis at the
+          column edge; on mobile every row is cut off at the screen edge, and
+          the location name is left out to make room. Missing parts are left
+          out along with their separator. Everything is secondary except the
+          title, which sets its own primary colour; the next event is all
+          highlight. */}
       <div
         className={cn(
-          isPast ? "min-w-0 truncate" : "whitespace-nowrap",
+          "min-w-0 truncate",
+          !isPast && "sm:overflow-visible",
           isNext ? "text-highlight" : "text-secondary",
         )}
       >
-        {segments.map((segment, index) => (
-          <Fragment key={index}>
-            {index > 0 ? (
-              <>
-                {" "}
-                <span aria-hidden className="opacity-30">
-                  /
-                </span>{" "}
-              </>
-            ) : null}
-            {/* The title at full strength; every other detail recedes. */}
-            {segment === title ? (
-              segment
-            ) : (
-              <span className="opacity-60">{segment}</span>
-            )}
-          </Fragment>
-        ))}
+        {segments.map((segment, index) => {
+          const part = (
+            <>
+              {index > 0 ? (
+                <>
+                  {" "}
+                  <span aria-hidden className="opacity-30">
+                    /
+                  </span>{" "}
+                </>
+              ) : null}
+              {/* The title at full strength; every other detail recedes. */}
+              {segment === title ? (
+                segment
+              ) : (
+                <span className="opacity-60">{segment}</span>
+              )}
+            </>
+          );
+
+          // The location always follows the title, so hiding it with its
+          // leading separator never leaves a stray one at the start.
+          return segment === locationSegment ? (
+            <span key={index} className="hidden sm:inline">
+              {part}
+            </span>
+          ) : (
+            <Fragment key={index}>{part}</Fragment>
+          );
+        })}
       </div>
     </div>
   );

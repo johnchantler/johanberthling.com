@@ -49,6 +49,8 @@ export const ThemedBody = async ({ children }: { children: ReactNode }) => {
       ? templateConfig.fontName
       : "default";
   const colorOverrideCss = buildThemeColorOverrideCss(templateConfig, themeId);
+  const fontStyle =
+    ThemeFonts[fontName as keyof typeof ThemeFonts] ?? ThemeFonts.default;
 
   return (
     <ThemeProvider attribute="class" forcedTheme={themeId}>
@@ -59,12 +61,12 @@ export const ThemedBody = async ({ children }: { children: ReactNode }) => {
           {colorOverrideCss}
         </style>
       )}
-      <div
-        className="flex min-h-screen flex-col"
-        style={
-          ThemeFonts[fontName as keyof typeof ThemeFonts] ?? ThemeFonts.default
-        }
-      >
+      {/* Applied to <body> rather than only the wrapper div so content that
+          portals to document.body (e.g. the mobile nav dialog) inherits it. */}
+      <style href="venue-theme-font" precedence="high">
+        {`body { font-family: ${fontStyle.fontFamily}; }`}
+      </style>
+      <div className="flex min-h-screen flex-col" style={fontStyle}>
         {fontName === "custom" && site && (
           <style>
             {`

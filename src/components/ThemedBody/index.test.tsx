@@ -82,14 +82,14 @@ describe("ThemedBody", () => {
     // be the only source of color.
     const html = await renderWithConfig({ themeId: "space" });
 
-    expect(html).not.toContain("<style");
+    expect(html).not.toContain("venue-theme-colors");
     expect(html).not.toContain(":root:root");
   });
 
   it("renders when the site has no template config at all", async () => {
     getSite.mockResolvedValue({ data: undefined });
 
-    expect(await render()).not.toContain("<style");
+    expect(await render()).not.toContain("venue-theme-colors");
   });
 });
 
@@ -122,6 +122,16 @@ describe("ThemedBody fonts", () => {
       expect(declared).toContain(family);
     },
   );
+
+  it("sets the font on <body> too, for content portalled outside the wrapper", async () => {
+    // The mobile nav dialog portals to document.body, so the wrapper div's
+    // inline font never reaches it.
+    const html = await renderWithConfig({ fontName: "Inter" });
+
+    expect(html).toMatch(
+      /<style[^>]*venue-theme-font[^>]*>body \{ font-family: 'Inter', /,
+    );
+  });
 
   it("renders a font the CMS no longer offers in the default font", async () => {
     expect(await familyFor("Gothic_A1")).toBe(await familyFor("default"));

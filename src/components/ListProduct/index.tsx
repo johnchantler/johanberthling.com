@@ -35,7 +35,7 @@ export const ListProduct = ({
   return (
     <div
       className={cn(
-        "flex break-inside-avoid flex-col gap-8 pb-8 sm:gap-0",
+        "scroll-fade-edges flex break-inside-avoid flex-col gap-8 pb-8 sm:gap-0",
         className,
       )}
     >
@@ -119,8 +119,14 @@ const DESKTOP_COLUMNS = [
  */
 export const ProductCoversGrid = ({
   products,
+  fadeOnAllScreens,
 }: {
   products: ReadonlyArray<Product>;
+  /**
+   * Fade covers at the screen's edges as they scroll at every screen size,
+   * rather than on mobile only (see .scroll-fade-edges in globals.css).
+   */
+  fadeOnAllScreens?: boolean;
 }) => {
   const count = products.length;
   const mobileColumns = Math.min(count, 2);
@@ -144,7 +150,14 @@ export const ProductCoversGrid = ({
             } as CSSProperties
           }
         >
-          <ProductCover product={product} />
+          {/* Its own box: the cell's fade-in already takes `animation`. */}
+          <div
+            className={
+              fadeOnAllScreens ? "scroll-fade-edges-all" : "scroll-fade-edges"
+            }
+          >
+            <ProductCover product={product} />
+          </div>
         </div>
       ))}
     </div>
