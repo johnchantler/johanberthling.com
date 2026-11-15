@@ -1,4 +1,6 @@
 import type { Site } from "@venuecms/sdk-next";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { ReactNode } from "react";
 import { renderToReadableStream } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,34 +9,8 @@ const getSite = vi.fn();
 
 vi.mock("@venuecms/sdk-next", () => ({ getSite: () => getSite() }));
 
-// next/font/google is a compiler transform with no runtime outside a Next
-// build, and next-themes only contributes the <html> class, which lives above
-// the subtree rendered here.
-vi.mock("next/font/google", () => {
-  const font = () => ({ style: { fontFamily: "stub" } });
-
-  return Object.fromEntries(
-    [
-      "Abel",
-      "Courier_Prime",
-      "EB_Garamond",
-      "Gothic_A1",
-      "Hanken_Grotesk",
-      "IBM_Plex_Mono",
-      "Inter",
-      "Jost",
-      "Karla",
-      "Kosugi_Maru",
-      "Open_Sans",
-      "Oswald",
-      "Outfit",
-      "Schibsted_Grotesk",
-      "Special_Elite",
-      "Work_Sans",
-      "Young_Serif",
-    ].map((name) => [name, font]),
-  );
-});
+// next-themes only contributes the <html> class, which lives above the
+// subtree rendered here.
 vi.mock("next-themes", () => ({
   ThemeProvider: ({ children }: { children: ReactNode }) => children,
 }));
@@ -114,5 +90,40 @@ describe("ThemedBody", () => {
     getSite.mockResolvedValue({ data: undefined });
 
     expect(await render()).not.toContain("<style");
+  });
+});
+
+describe("ThemedBody fonts", () => {
+  const read = (path: string) =>
+    readFileSync(fileURLToPath(new URL(path, import.meta.url)), "utf8");
+  const declared = new Set(
+    [...read("./fonts/fonts.css").matchAll(/font-family: ["'](.+?)["']/g)].map(
+      ([, family]) => family,
+    ),
+  );
+  const offered: string[] = JSON.parse(
+    read("../../../public/_venue/config.schema.json"),
+  ).properties.fontName.enum;
+
+  const familyFor = async (fontName: string) => {
+    const html = await renderWithConfig({ fontName });
+
+    return html.match(/font-family:\s*(?:'|&#x27;)([^'&]+)/)?.[1];
+  };
+
+  it.each(offered.filter((name) => name !== "custom"))(
+    "renders %s with a self-hosted font",
+    async (fontName) => {
+      // Every font the CMS offers has to map to a family fonts.css declares,
+      // or the site silently falls back to a system font.
+      const family = await familyFor(fontName);
+
+      expect(family).toBeDefined();
+      expect(declared).toContain(family);
+    },
+  );
+
+  it("renders a font the CMS no longer offers in the default font", async () => {
+    expect(await familyFor("Gothic_A1")).toBe(await familyFor("default"));
   });
 });

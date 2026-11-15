@@ -1,148 +1,37 @@
 import { getSite } from "@venuecms/sdk-next";
 import { ThemeProvider } from "next-themes";
-import {
-  Abel,
-  Courier_Prime,
-  EB_Garamond,
-  Gothic_A1,
-  Hanken_Grotesk,
-  IBM_Plex_Mono,
-  Inter,
-  Jost,
-  Karla,
-  Kosugi_Maru,
-  Open_Sans,
-  Oswald,
-  Outfit,
-  Schibsted_Grotesk,
-  Special_Elite,
-  Work_Sans,
-  Young_Serif,
-} from "next/font/google";
 import { ReactNode } from "react";
 
 import { buildThemeColorOverrideCss } from "./colors";
+import "./fonts/fonts.css";
 
-const WorkSans = Work_Sans({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
+// Self-hosted (see scripts/fetch-google-fonts.mjs) rather than next/font/google,
+// so builds never depend on reaching Google, and a page downloads only the one
+// font its site actually uses.
+const font = (family: string, fallback: string) => ({
+  fontFamily: `'${family}', ${fallback}`,
 });
 
-const oswald = Oswald({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
-const courierPrime = Courier_Prime({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
-const KosugiMaru = Kosugi_Maru({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
-
-const SpecialElite = Special_Elite({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
-const karla = Karla({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
-const ebGaramond = EB_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "800"],
-  display: "swap",
-});
-
-const abel = Abel({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
-const SchibstedGrotesk = Schibsted_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  display: "swap",
-});
-
-const HankenGrotesk = Hanken_Grotesk({
-  subsets: ["latin"],
-  weight: ["600", "800"],
-  display: "swap",
-});
-
-const YoungSerif = Young_Serif({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
-
-const GothicA1 = Gothic_A1({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  display: "swap",
-});
-
-const jost = Jost({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const IBMPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["300", "500"],
-  display: "swap",
-});
-
-const OpenSans = Open_Sans({
-  subsets: ["latin"],
-  weight: ["300", "500"],
-  display: "swap",
-});
+const sans = "ui-sans-serif, system-ui, sans-serif";
+const serif = "ui-serif, Georgia, serif";
+const mono = "ui-monospace, Menlo, monospace";
 
 const ThemeFonts = {
-  Work_Sans: WorkSans.style,
-  oswald: oswald.style,
-  Courier: courierPrime.style,
-  Kosugi_Maru: KosugiMaru.style,
-  Special_Elite: SpecialElite.style,
-  Inter: inter.style,
-  Karla: karla.style,
-  EB_Garamond: ebGaramond.style,
-  abel: abel.style,
-  outfit: outfit.style,
-  Schibsted_Grotesk: SchibstedGrotesk.style,
-  Hanken_Grotesk: HankenGrotesk.style,
-  Young_Serif: YoungSerif.style,
-  Gothic_A1: GothicA1.style,
-  jost: jost.style,
-  IBM_Plex_Mono: IBMPlexMono.style,
-  Open_Sans: OpenSans.style,
-  default: SchibstedGrotesk.style,
+  Work_Sans: font("Work Sans", sans),
+  Courier: font("Courier Prime", mono),
+  Special_Elite: font("Special Elite", mono),
+  Inter: font("Inter", sans),
+  Karla: font("Karla", sans),
+  EB_Garamond: font("EB Garamond", serif),
+  abel: font("Abel", sans),
+  outfit: font("Outfit", sans),
+  Schibsted_Grotesk: font("Schibsted Grotesk", sans),
+  Hanken_Grotesk: font("Hanken Grotesk", sans),
+  Young_Serif: font("Young Serif", serif),
+  jost: font("Jost", sans),
+  IBM_Plex_Mono: font("IBM Plex Mono", mono),
+  Open_Sans: font("Open Sans", sans),
+  default: font("Schibsted Grotesk", sans),
   custom: { fontFamily: "custom" },
 };
 
