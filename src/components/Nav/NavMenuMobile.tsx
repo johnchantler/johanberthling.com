@@ -27,7 +27,11 @@ export const NavMenuMobile = ({
           </Dialog.Trigger>
 
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed left-0 top-0 flex h-screen w-screen overflow-y-auto bg-background">
+            {/* z-40: above the sticky page header (z-10) and page content (up
+                to z-30), whose logo and menu button would otherwise show
+                through on top of the dialog's own; below the navigation
+                progress bar (z-50), which should stay visible. */}
+            <Dialog.Overlay className="fixed left-0 top-0 z-40 flex h-screen w-screen overflow-y-auto bg-background">
               <Dialog.Content className="flex w-full flex-col p-6">
                 <Dialog.Title className="hidden">{t("menu")}</Dialog.Title>
 

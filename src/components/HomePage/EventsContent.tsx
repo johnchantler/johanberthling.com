@@ -37,7 +37,11 @@ const byStart = (items: Array<SiteEvent>) =>
  * sends back 20. This is a ceiling no site's upcoming events will reach.
  */
 const UPCOMING_LIMIT = 1000;
-const PAST_LIMIT = 12;
+/**
+ * At least PAST_IN_VIEW plus ScrollToEvent's STEPS_BACK (10), so the list has
+ * that many rows above where it rests to step through on load.
+ */
+const PAST_LIMIT = 15;
 
 /**
  * On desktop the page starts scrolled so this many past events show from the
