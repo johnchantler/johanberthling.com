@@ -117,7 +117,7 @@ export const RoughFrame = ({
     overshoots(seed, frame);
 
   return (
-    <div className={cn("relative max-w-full text-primary", className)}>
+    <div className={cn("relative max-w-full text-muted", className)}>
       {children}
       <span aria-hidden className="pointer-events-none">
         <span

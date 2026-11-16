@@ -4,7 +4,6 @@ import { Suspense } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { contentImageHandlers } from "@/components/VenueImage";
 import {
   ColumnLeft,
   ColumnRight,
@@ -16,6 +15,7 @@ import {
 import { ProductCoversSkeleton } from "../ListProduct";
 import {
   contentComponents,
+  contentHandlers,
   pageBodyStyles,
   productListingPageComponents,
   profileListingPageComponents,
@@ -65,7 +65,7 @@ export const PageListing = ({
 
   const body = (
     <VenueContent
-      components={contentImageHandlers}
+      components={contentHandlers}
       className={pageBodyStyles}
       content={content}
       contentStyles={

@@ -10,8 +10,14 @@
  * rendered. Content nested inside a listing passes plain `renderedStyles`
  * instead — without the listing entries, a listing cannot recurse into itself.
  */
-import type { AllListingComponents, ContentEntries } from "@venuecms/sdk-next";
+import type {
+  AllListingComponents,
+  ContentEntries,
+  NodeHandlers,
+} from "@venuecms/sdk-next";
 
+import { EmailListSignupBlock } from "@/components/EmailSignup";
+import { contentImageHandlers } from "@/components/VenueImage";
 import { renderedStyles } from "@/components/utils/styles";
 
 import {
@@ -61,4 +67,19 @@ export const productListingPageComponents: ContentEntries &
   AllListingComponents = {
   ...contentComponents,
   productListing: ProductCoversListingBlock,
+};
+
+/**
+ * Handlers for content nodes the SDK's renderer does not draw itself: images,
+ * so they get the template's frame, and the email signup form, which the SDK
+ * would otherwise drop and leave a gap where the author put it.
+ *
+ * Pass this to VenueContent's `components` wherever `contentComponents` (or a
+ * variant of it) goes to `contentStyles`. Content rendered inside a link, with
+ * plain `renderedStyles`, keeps `contentImageHandlers` alone: a form inside a
+ * link is invalid HTML.
+ */
+export const contentHandlers: NodeHandlers = {
+  ...contentImageHandlers,
+  emailListSignup: EmailListSignupBlock,
 };
