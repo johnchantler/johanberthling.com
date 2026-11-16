@@ -8,8 +8,12 @@ import { useLocale } from "next-intl";
 
 import { cn } from "@/lib/utils";
 
-import { contentComponents, pageBodyStyles } from "@/components/ListingBlock";
-import { VenueImage, contentImageHandlers } from "@/components/VenueImage";
+import {
+  contentComponents,
+  contentHandlers,
+  pageBodyStyles,
+} from "@/components/ListingBlock";
+import { VenueImage } from "@/components/VenueImage";
 
 import { ProfileCompact } from "../ProfileCompact";
 import {
@@ -84,7 +88,7 @@ const PageSection = ({
 
         <ColumnRight>
           <VenueContent
-            components={contentImageHandlers}
+            components={contentHandlers}
             className={pageBodyStyles}
             content={content}
             contentStyles={contentComponents}

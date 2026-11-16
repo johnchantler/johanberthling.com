@@ -14,9 +14,8 @@ import { getLinkedEvents, parseLinkedSiteKeys } from "@/lib/utils/linkedEvents";
 
 import { EventsList, ListEvent, findNextEventId } from "@/components/EventList";
 import { ScrollToEvent } from "@/components/HomePage/ScrollToEvent";
-import { contentComponents } from "@/components/ListingBlock";
+import { contentComponents, contentHandlers } from "@/components/ListingBlock";
 import { TranslatedText } from "@/components/TranslatedText";
-import { contentImageHandlers } from "@/components/VenueImage";
 import { ColumnLeft, ColumnRight, TwoColumnLayout } from "@/components/layout";
 
 type SiteEvent = { event: Event; site: Site };
@@ -44,8 +43,9 @@ const UPCOMING_LIMIT = 1000;
 const PAST_LIMIT = 15;
 
 /**
- * On desktop the page starts scrolled so this many past events show from the
- * nav down; the rest are above, a scroll up away (ScrollToEvent).
+ * The page starts scrolled so this many past events show from the nav (or, on
+ * smaller screens, the sticky header) down; the rest are above, a scroll up
+ * away (ScrollToEvent).
  */
 const PAST_IN_VIEW = 5;
 const SCROLL_TARGET_ID = "home-scroll-target";
@@ -138,7 +138,7 @@ export async function EventsContent({
       <ColumnLeft className="hidden text-sm text-secondary sm:flex">
         {siteContent ? (
           <VenueContent
-            components={contentImageHandlers}
+            components={contentHandlers}
             className="flex flex-col gap-6"
             content={siteContent}
             contentStyles={contentComponents}
@@ -192,16 +192,18 @@ export async function EventsContent({
                 />
               ))}
             </EventsList>
-            {scrollTarget ? (
-              <ScrollToEvent targetId={SCROLL_TARGET_ID} />
-            ) : null}
+            {/* Always rendered: it resets the scroll position even when
+                there's no event to land on. */}
+            <ScrollToEvent
+              targetId={scrollTarget ? SCROLL_TARGET_ID : undefined}
+            />
           </section>
         ) : null}
 
         {siteContent ? (
           <div className="flex sm:hidden">
             <VenueContent
-              components={contentImageHandlers}
+              components={contentHandlers}
               className="flex flex-col gap-6"
               content={siteContent}
               contentStyles={contentComponents}

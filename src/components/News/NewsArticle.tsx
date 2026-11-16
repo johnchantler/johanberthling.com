@@ -7,8 +7,8 @@ import {
 import { format } from "date-fns";
 import { getLocale } from "next-intl/server";
 
-import { contentComponents } from "@/components/ListingBlock";
-import { VenueImage, contentImageHandlers } from "@/components/VenueImage";
+import { contentComponents, contentHandlers } from "@/components/ListingBlock";
+import { VenueImage } from "@/components/VenueImage";
 
 import { ProfileCompact } from "../ProfileCompact";
 import { ProfileLink } from "../ProfileLink";
@@ -58,7 +58,7 @@ export const NewsArticle = async ({
         {date ? <div className="text-sm text-muted">{date}</div> : null}
         {article.image ? <VenueImage image={article.image} /> : null}
         <VenueContent
-          components={contentImageHandlers}
+          components={contentHandlers}
           className="flex flex-col gap-6 text-sm"
           content={content}
           contentStyles={contentComponents}
