@@ -7,8 +7,12 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Suspense } from "react";
 
-import { contentComponents, pageBodyStyles } from "@/components/ListingBlock";
-import { VenueImage, contentImageHandlers } from "@/components/VenueImage";
+import {
+  contentComponents,
+  contentHandlers,
+  pageBodyStyles,
+} from "@/components/ListingBlock";
+import { VenueImage } from "@/components/VenueImage";
 
 import {
   ColumnLeft,
@@ -51,7 +55,7 @@ export const Profile = ({
 
       <ColumnRight>
         <VenueContent
-          components={contentImageHandlers}
+          components={contentHandlers}
           className={pageBodyStyles}
           content={content}
           contentStyles={contentComponents}

@@ -14,9 +14,8 @@ import { getLinkedEvents, parseLinkedSiteKeys } from "@/lib/utils/linkedEvents";
 
 import { EventsList, ListEvent, findNextEventId } from "@/components/EventList";
 import { ScrollToEvent } from "@/components/HomePage/ScrollToEvent";
-import { contentComponents } from "@/components/ListingBlock";
+import { contentComponents, contentHandlers } from "@/components/ListingBlock";
 import { TranslatedText } from "@/components/TranslatedText";
-import { contentImageHandlers } from "@/components/VenueImage";
 import { ColumnLeft, ColumnRight, TwoColumnLayout } from "@/components/layout";
 
 type SiteEvent = { event: Event; site: Site };
@@ -138,7 +137,7 @@ export async function EventsContent({
       <ColumnLeft className="hidden text-sm text-secondary sm:flex">
         {siteContent ? (
           <VenueContent
-            components={contentImageHandlers}
+            components={contentHandlers}
             className="flex flex-col gap-6"
             content={siteContent}
             contentStyles={contentComponents}
@@ -201,7 +200,7 @@ export async function EventsContent({
         {siteContent ? (
           <div className="flex sm:hidden">
             <VenueContent
-              components={contentImageHandlers}
+              components={contentHandlers}
               className="flex flex-col gap-6"
               content={siteContent}
               contentStyles={contentComponents}
