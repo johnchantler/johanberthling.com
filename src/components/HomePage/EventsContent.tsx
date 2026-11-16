@@ -43,8 +43,9 @@ const UPCOMING_LIMIT = 1000;
 const PAST_LIMIT = 15;
 
 /**
- * On desktop the page starts scrolled so this many past events show from the
- * nav down; the rest are above, a scroll up away (ScrollToEvent).
+ * The page starts scrolled so this many past events show from the nav (or, on
+ * smaller screens, the sticky header) down; the rest are above, a scroll up
+ * away (ScrollToEvent).
  */
 const PAST_IN_VIEW = 5;
 const SCROLL_TARGET_ID = "home-scroll-target";
@@ -191,9 +192,11 @@ export async function EventsContent({
                 />
               ))}
             </EventsList>
-            {scrollTarget ? (
-              <ScrollToEvent targetId={SCROLL_TARGET_ID} />
-            ) : null}
+            {/* Always rendered: it resets the scroll position even when
+                there's no event to land on. */}
+            <ScrollToEvent
+              targetId={scrollTarget ? SCROLL_TARGET_ID : undefined}
+            />
           </section>
         ) : null}
 

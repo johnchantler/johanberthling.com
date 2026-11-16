@@ -12,6 +12,23 @@ const NAV_TEXT_TOP = 4;
 /** Tailwind's lg breakpoint, where the nav and content share a row. */
 const DESKTOP = "(min-width: 1024px)";
 
+/**
+ * How far from the top of the viewport the target row should sit. On desktop,
+ * level with the nav's text. Below that the header is a sticky bar over the
+ * content, so the row goes just beneath whichever header is showing.
+ */
+const targetOffset = () => {
+  if (window.matchMedia(DESKTOP).matches) {
+    return NAV_TEXT_TOP;
+  }
+
+  const header = Array.from(document.querySelectorAll("header")).find(
+    (element) => element.getClientRects().length > 0,
+  );
+
+  return header ? header.getBoundingClientRect().bottom : 0;
+};
+
 const MOTION_OK = "(prefers-reduced-motion: no-preference)";
 
 /** How many rows back the list starts before stepping into place. */
@@ -85,48 +102,133 @@ const stepIntoPlace = (target: HTMLElement) => {
   list.animate(keyframes, { duration });
 };
 
+/** How many frames to wait for a hidden list to be laid out before giving up. */
+const MAX_WAIT_FRAMES = 30;
+
 /**
- * Starts the home page scrolled so the event row `targetId` sits level with
- * the nav, leaving the past events before it a scroll up away rather than out
- * of reach, with the list ticking the last few rows into place
- * (stepIntoPlace) unless the visitor prefers reduced motion. Desktop only.
- * Left alone when the visitor has already scrolled,
- * or arrived with a #fragment or a restored scroll position, so it never
- * takes the page from under them.
+ * Resets the home page's scroll position on every visit, reloads and
+ * back/forward included. It starts scrolled so the event row `targetId` sits
+ * level with the nav (on smaller screens, just below the sticky header; see
+ * targetOffset), leaving the past events before it a scroll up away rather
+ * than out of reach, with the list ticking the last few rows into place
+ * (stepIntoPlace) unless the visitor prefers reduced motion. With no target
+ * (too few past events to scroll past), it starts at the top.
+ *
+ * The browser's own scroll restoration is switched off while the home page is
+ * up, so it can't put a remembered position back over this one. Only a
+ * #fragment is left alone, so a link into the page still lands where it
+ * points.
  *
  * Renders a spacer at the end of the list: when the page is too short to
  * scroll that far, it's grown by just the shortfall so the alignment holds.
+ *
+ * With `cacheComponents` on, Next keeps a page the visitor has left mounted
+ * but hidden, and shows that same instance again on the way back. So this
+ * runs again on every reveal, not only on mount, and has to allow for two
+ * things: the spacer still holds its last height, and the list may not be
+ * laid out yet when the effect runs (a hidden element measures at 0, which
+ * would scroll by wherever the previous page was). Hence the spacer is reset
+ * before each measurement, and placement waits for the list to be visible.
  */
-export const ScrollToEvent = ({ targetId }: { targetId: string }) => {
+export const ScrollToEvent = ({ targetId }: { targetId?: string }) => {
   const spacer = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
-    const target = document.getElementById(targetId);
+    const { history } = window;
+    const restoration = history.scrollRestoration;
+    history.scrollRestoration = "manual";
 
-    if (
-      !target ||
-      !spacer.current ||
-      window.location.hash ||
-      window.scrollY > 0 ||
-      !window.matchMedia(DESKTOP).matches
-    ) {
-      return;
+    let frame: number | undefined;
+
+    const cleanUp = () => {
+      history.scrollRestoration = restoration;
+      if (frame !== undefined) {
+        cancelAnimationFrame(frame);
+      }
+    };
+
+    if (window.location.hash) {
+      return cleanUp;
     }
 
-    const top =
-      target.getBoundingClientRect().top + window.scrollY - NAV_TEXT_TOP;
-    const scrollable =
-      document.documentElement.scrollHeight - window.innerHeight;
+    const target = targetId ? document.getElementById(targetId) : null;
 
-    if (top > scrollable) {
-      spacer.current.style.height = `${top - scrollable}px`;
+    /**
+     * Where to scroll, measured once: the list animates with a transform as
+     * soon as it's placed, and measuring again mid-animation would land low.
+     */
+    let measured: number | undefined;
+
+    /** Scrolls into place; false when the list isn't laid out to measure. */
+    const place = () => {
+      if (!target || !spacer.current) {
+        window.scrollTo({ top: 0, behavior: "instant" });
+        return true;
+      }
+
+      if (measured !== undefined) {
+        window.scrollTo({ top: measured, behavior: "instant" });
+        return true;
+      }
+
+      if (!target.getClientRects().length) {
+        return false;
+      }
+
+      // A step animation still running from an earlier pass (React runs
+      // effects twice in development; a cached page reveals more than once)
+      // shifts the list with a transform, and would throw the measurement off.
+      for (const animation of target.parentElement?.getAnimations() ?? []) {
+        animation.cancel();
+      }
+
+      // Measured without the last visit's spacer, from the top of the
+      // document, whatever the page is scrolled to.
+      spacer.current.style.height = "";
+      const top =
+        target.getBoundingClientRect().top + window.scrollY - targetOffset();
+      const scrollable =
+        document.documentElement.scrollHeight - window.innerHeight;
+
+      if (top > scrollable) {
+        spacer.current.style.height = `${top - scrollable}px`;
+      }
+
+      measured = top;
+      window.scrollTo({ top, behavior: "instant" });
+      return true;
+    };
+
+    let animated = false;
+    const animate = () => {
+      if (!animated && target && window.matchMedia(MOTION_OK).matches) {
+        animated = true;
+        stepIntoPlace(target);
+      }
+    };
+
+    // Placed now if the list is laid out, so a first load never paints at the
+    // wrong position. Then again on the next frame, before it paints: on a
+    // navigation within the site, Next's router scrolls the page to the top
+    // after this effect has run (its ScrollAndFocusHandler mounts after the
+    // page it wraps). A list still hidden here is placed on the first frame it
+    // can be measured.
+    if (place()) {
+      animate();
     }
 
-    window.scrollTo({ top, behavior: "instant" });
+    let waited = 0;
+    const onFrame = () => {
+      frame = undefined;
+      if (place()) {
+        animate();
+      } else if (++waited < MAX_WAIT_FRAMES) {
+        frame = requestAnimationFrame(onFrame);
+      }
+    };
+    frame = requestAnimationFrame(onFrame);
 
-    if (window.matchMedia(MOTION_OK).matches) {
-      stepIntoPlace(target);
-    }
+    return cleanUp;
   }, [targetId]);
 
   return <div ref={spacer} aria-hidden />;
